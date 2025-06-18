@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum DiskType {
+  LOCAL
+  AWS
+  SHARED
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  phoneNumber String
+  password    String
+  isVerified  Boolean  @default(false)
+  role        UserRole @default(user)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  //relations
+  detail        UserDetail?
+  refreshTokens RefreshToken[]
+
+  //indexing
+  @@index([email])
+  @@index([phoneNumber])
+  //rename database table name
+  @@map("users")
+}
+
+model UserDetail {
+  id      Int    @id @default(autoincrement())
+  image   Image?
+  address String
+  city    String
+  road    String
+  userId  Int    @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("userDetails")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @db.Text
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  //indexing
+  @@index([userId])
+  //rename database table name
+  @@map("refreshTokens")
+}
+
+model Image {
+  id           Int      @id @default(autoincrement())
+  diskType     DiskType
+  path         String
+  originalName String
+  modifiedName String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  //relations
+
+  userDetailId Int? @unique
+  userDetail UserDetail? @relation(fields: [userDetailId], references: [id], onDelete: Cascade)
+
+  @@map("images")
+}
