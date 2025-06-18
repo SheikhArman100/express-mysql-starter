@@ -1,10 +1,9 @@
 import { Server } from 'http';
 
 import app from './app';
-import config from './config/index';
 import { prisma } from './client';
-
-
+import config from './config/index';
+import logger from './shared/logger';
 
 let server: Server;
 
@@ -15,29 +14,46 @@ async function main() {
   try {
     // Connect to MySQL using Prisma
     await prisma.$connect();
-    console.log('Database is successfully connected');
+    logger.info('Database connection established successfully');
 
     server = app.listen(config.port, () => {
-      console.log(`Application listening on port ${config.port}`);
+      logger.info(`Server started successfully on port ${config.port}`);
     });
   } catch (error) {
-    console.log(`Failed to connect to database, ${error}`);
+    logger.info('Failed to connect database', { error });
+    throw error;
   }
 
   process.on('unhandledRejection', error => {
+    logger.info('Unhandled Rejection', { error });
     if (server) {
       server.close(() => {
-        console.log(error);
+        logger.info('Server closed due to unhandled rejection', { error });
         process.exit(1);
       });
     } else {
       process.exit(1);
     }
   });
+
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received');
+    if (server) {
+      server.close(() => {
+        logger.info('Server closed');
+        process.exit(0);
+      });
+    }
+  });
 }
 
 const start = async (): Promise<void> => {
-  await main();
+  try {
+    await main();
+  } catch (err) {
+    logger.info('Failed to start application', { error: err });
+    process.exit(1);
+  }
 };
 
-start().catch(err => console.error('Error starting application:', err));
+start();
