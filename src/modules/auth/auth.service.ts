@@ -322,10 +322,10 @@ const updateToken = async (refreshToken: string) => {
 };
 
 //sign out
-const signOut = async (refreshToken: string, userInfo: UserInfoFromToken) => {
+const signOut = async (refreshToken: string) => {
   // Check if refresh token exists in DB
   const foundToken = await prisma.refreshToken.findFirst({
-    where: { token: refreshToken, userId: Number(userInfo.id) },
+    where: { token: refreshToken },
   });
 
   if (!foundToken) {
@@ -334,7 +334,7 @@ const signOut = async (refreshToken: string, userInfo: UserInfoFromToken) => {
 
   // Delete the refresh token
   const result = await prisma.refreshToken.deleteMany({
-    where: { token: refreshToken, userId: Number(userInfo.id) },
+    where: { token: refreshToken },
   });
 
   // Return true if at least one token was deleted

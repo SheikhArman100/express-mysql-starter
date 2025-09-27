@@ -23,8 +23,10 @@ router.post('/resend-verification', validateRequest(AuthValidation.resendVerific
 router.post('/signin', validateRequest(AuthValidation.SigninSchema), AuthController.signin);    
 
 //signout
-router.post('/signout',auth(), AuthController.signOut);
+router.post('/signout', AuthController.signOut);
 
+
+//update token
 router.get('/token', AuthController.updateToken);
 
 router.get('/user', AuthController.checkUser);

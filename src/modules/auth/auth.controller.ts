@@ -119,7 +119,7 @@ const signOut = catchAsync(async (req: Request, res: Response) => {
     throw new ApiError(status.UNAUTHORIZED, 'Please sign in first');
   }
 
-  const result = await AuthService.signOut(refreshToken,req.user as UserInfoFromToken);
+  const result = await AuthService.signOut(refreshToken);
 
   
   res.clearCookie(ENUM_COOKIE_NAME.REFRESH_TOKEN, {
