@@ -18,6 +18,10 @@ router.put('/verify-email',validateRequest(AuthValidation.verifyEmailSchema),Aut
 router.post('/resend-verification', validateRequest(AuthValidation.resendVerificationSchema), AuthController.resendVerification)
 
 
+//signin
+router.post('/signin', validateRequest(AuthValidation.SigninSchema), AuthController.signin);    
+
+
 
 router.get('/token', AuthController.updateToken);
 router.post('/signout', AuthController.signOut);

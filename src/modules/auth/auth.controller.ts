@@ -56,11 +56,10 @@ const resendVerification = catchAsync(async (req: Request, res: Response) => {
 });
 
 const signin = catchAsync(async (req: Request, res: Response) => {
-  if (!req.user) {
-    throw new ApiError(status.UNAUTHORIZED, 'Signin failed');
-  }
+  const existingRefreshToken = req?.cookies?.[ENUM_COOKIE_NAME.REFRESH_TOKEN];
   const { refreshToken, ...result } = await AuthService.signin(
-    req.user as IUser,
+    req.body as { email: string; password: string },
+    existingRefreshToken,
   );
   const cookieOptions = {
     secure: config.env === 'production',

@@ -9,7 +9,8 @@ import { sendEmail } from '../../helpers/nodeMailer';
 import { parseExpirationTime } from '../../utils';
 import { IUser } from '../user/user.interface';
 import { IFile } from '../../interfaces/common';
-import { FileType } from '../../types/common';
+import logger from '../../shared/logger';
+
 
 //signup
 const signup = async (payload: IUser,multerFile?: IFile) => {
@@ -178,7 +179,7 @@ const resendVerification = async (email: string) => {
 };
 
 //signin
-const signin = async (payload: IUser) => {
+const signin = async (payload: {email:string, password:string}, existingRefreshToken?: string) => {
   const { email, password } = payload;
 
   // Find user in database
@@ -198,6 +199,29 @@ const signin = async (payload: IUser) => {
   const isPasswordValid = compare(password, user.password);
   if (!isPasswordValid) {
     throw new ApiError(status.UNPROCESSABLE_ENTITY, 'Password is incorrect.');
+  }
+
+  // Handle existing refresh token for security
+  if (existingRefreshToken) {
+    const foundToken = await prisma.refreshToken.findFirst({
+      where: { token: existingRefreshToken, userId: user.id },
+    });
+
+    if (!foundToken) {
+      logger.error('Attempted refresh token reuse at signin!',{
+        userId: user.id,  
+        email: user.email,  
+        time: new Date().toISOString(),
+      });
+      await prisma.refreshToken.deleteMany({
+        where: { userId: user.id },
+      });
+    } else {
+      // Remove the existing RT
+      await prisma.refreshToken.delete({
+        where: { id: foundToken.id,userId: user.id},
+      });
+    }
   }
 
   // Generate Access Token
@@ -230,7 +254,7 @@ const signin = async (payload: IUser) => {
   return {
     accessToken,
     refreshToken,
-    role: user.role,
+    id: user.id,
   };
 };
 
