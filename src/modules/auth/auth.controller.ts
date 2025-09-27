@@ -8,6 +8,7 @@ import ApiError from '../../errors/ApiError';
 import { IUser } from '../user/user.interface';
 import config from '../../config';
 import { ENUM_COOKIE_NAME } from '../../enum/user';
+import { UserInfoFromToken } from '../../types/common';
 
 const signup = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.signup( req.body,
@@ -118,11 +119,9 @@ const signOut = catchAsync(async (req: Request, res: Response) => {
     throw new ApiError(status.UNAUTHORIZED, 'Please sign in first');
   }
 
-  const result = await AuthService.signOut(refreshToken);
+  const result = await AuthService.signOut(refreshToken,req.user as UserInfoFromToken);
 
-  if (!result) {
-    throw new ApiError(status.UNAUTHORIZED, 'You are not authorized');
-  }
+  
   res.clearCookie(ENUM_COOKIE_NAME.REFRESH_TOKEN, {
     secure: config.env === 'production',
     httpOnly: true,

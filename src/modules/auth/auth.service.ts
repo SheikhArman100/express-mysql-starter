@@ -10,10 +10,10 @@ import { parseExpirationTime } from '../../utils';
 import { IUser } from '../user/user.interface';
 import { IFile } from '../../interfaces/common';
 import logger from '../../shared/logger';
-
+import { UserInfoFromToken } from '../../types/common';
 
 //signup
-const signup = async (payload: IUser,multerFile?: IFile) => {
+const signup = async (payload: IUser, multerFile?: IFile) => {
   //check existing user
   const existingUser = await prisma.user.findFirst({
     where: {
@@ -108,10 +108,10 @@ const signup = async (payload: IUser,multerFile?: IFile) => {
 const verifyEmail = async (token: string) => {
   let verifiedUser = null;
 
- verifiedUser =jwtHelpers.verifyToken(
-      token,
-      config.jwt.verify_email_secret as Secret,
-    );
+  verifiedUser = jwtHelpers.verifyToken(
+    token,
+    config.jwt.verify_email_secret as Secret,
+  );
 
   const user = await prisma.user.findUnique({
     where: { email: verifiedUser.email },
@@ -173,13 +173,16 @@ const resendVerification = async (email: string) => {
     'Verify Your Email',
   );
 
-  return{
+  return {
     id: user.id,
-  }
+  };
 };
 
 //signin
-const signin = async (payload: {email:string, password:string}, existingRefreshToken?: string) => {
+const signin = async (
+  payload: { email: string; password: string },
+  existingRefreshToken?: string,
+) => {
   const { email, password } = payload;
 
   // Find user in database
@@ -208,9 +211,9 @@ const signin = async (payload: {email:string, password:string}, existingRefreshT
     });
 
     if (!foundToken) {
-      logger.error('Attempted refresh token reuse at signin!',{
-        userId: user.id,  
-        email: user.email,  
+      logger.error('Attempted refresh token reuse at signin!', {
+        userId: user.id,
+        email: user.email,
         time: new Date().toISOString(),
       });
       await prisma.refreshToken.deleteMany({
@@ -219,7 +222,7 @@ const signin = async (payload: {email:string, password:string}, existingRefreshT
     } else {
       // Remove the existing RT
       await prisma.refreshToken.delete({
-        where: { id: foundToken.id,userId: user.id},
+        where: { id: foundToken.id, userId: user.id },
       });
     }
   }
@@ -319,10 +322,23 @@ const updateToken = async (refreshToken: string) => {
 };
 
 //sign out
-const signOut = async (refreshToken: string) => {
-  return await prisma.refreshToken.deleteMany({
-    where: { token: refreshToken },
+const signOut = async (refreshToken: string, userInfo: UserInfoFromToken) => {
+  // Check if refresh token exists in DB
+  const foundToken = await prisma.refreshToken.findFirst({
+    where: { token: refreshToken, userId: Number(userInfo.id) },
   });
+
+  if (!foundToken) {
+    return false;
+  }
+
+  // Delete the refresh token
+  const result = await prisma.refreshToken.deleteMany({
+    where: { token: refreshToken, userId: Number(userInfo.id) },
+  });
+
+  // Return true if at least one token was deleted
+  return result.count > 0;
 };
 
 //check user

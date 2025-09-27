@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { AuthValidation } from './auth.validation';
 import { FileUploadHelper } from '../../helpers/fileUploadHelpers';
 import formDataToJson from '../../middleware/formDataToJson';
+import auth from '../../middleware/auth';
 
 
 
@@ -21,10 +22,10 @@ router.post('/resend-verification', validateRequest(AuthValidation.resendVerific
 //signin
 router.post('/signin', validateRequest(AuthValidation.SigninSchema), AuthController.signin);    
 
-
+//signout
+router.post('/signout',auth(), AuthController.signOut);
 
 router.get('/token', AuthController.updateToken);
-router.post('/signout', AuthController.signOut);
 
 router.get('/user', AuthController.checkUser);
 
