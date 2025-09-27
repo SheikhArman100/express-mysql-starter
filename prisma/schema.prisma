@@ -11,6 +11,12 @@ enum UserRole {
   user
   admin
 }
+enum FileType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  OTHER
+}
 
 enum DiskType {
   LOCAL
@@ -42,10 +48,10 @@ model User {
 
 model UserDetail {
   id      Int    @id @default(autoincrement())
-  image   Image?
-  address String
-  city    String
-  road    String
+  image    File?
+  address String?
+  city    String?
+  road    String?
   userId  Int    @unique
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -66,12 +72,13 @@ model RefreshToken {
   @@map("refreshTokens")
 }
 
-model Image {
+model File {
   id           Int      @id @default(autoincrement())
   diskType     DiskType
   path         String
   originalName String
   modifiedName String
+  type         FileType   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -80,5 +87,5 @@ model Image {
   userDetailId Int? @unique
   userDetail UserDetail? @relation(fields: [userDetailId], references: [id], onDelete: Cascade)
 
-  @@map("images")
+  @@map("files")
 }

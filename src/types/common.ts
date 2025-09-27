@@ -1,4 +1,4 @@
-import { DiskTypeEnum } from "../enum/user";
+import { DiskTypeEnum, FileTypeEnum } from "../enum/user";
 
 /**
  * All types of user roles
@@ -31,4 +31,5 @@ export type FileType = {
   path: string;
   originalName: string;
   modifiedName: string;
+  type: FileTypeEnum; 
 };

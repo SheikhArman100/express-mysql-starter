@@ -1,18 +1,13 @@
 import multer from 'multer';
 
 /**
- * Defines the storage configuration for multer based on the provided folder.This function stores all kind of files inside our local storage
+ * Defines the storage configuration for multer based on the provided folder.
  * @param folder The folder name where files will be stored (required).
  */
 const storage = (folder: string) =>
   multer.diskStorage({
     destination: function (req, file, cb) {
-      console.log(req.file);
-      if (file.mimetype.includes('video')) {
-        cb(null, `uploads/${folder}/videos`);
-      } else {
-        cb(null, `uploads/${folder}/images`);
-      }
+      cb(null, `uploads/${folder}/`);
     },
     filename: function (req, file, cb) {
       const newFileName =
@@ -29,6 +24,7 @@ const storage = (folder: string) =>
 const uploadSingle = (folder: string) =>
   multer({ storage: storage(folder) }).single('file');
 
+
 /**
  * Initializes multer with the provided storage configuration for multiple files.
  * @param folder The folder name where files will be stored (required).
@@ -39,11 +35,20 @@ const uploadSingle = (folder: string) =>
 const uploadMultiple = (folder: string, fieldName: string, maxCount: number) =>
   multer({ storage: storage(folder) }).array(fieldName, maxCount);
 
-const uploadAny = (folder: string) =>
-  multer({ storage: storage(folder) }).any();
+
+const uploadMultipleFields = (folder: string, fields: string[],maxCount:number=1) => {
+  return multer({
+    storage: storage(folder),
+  }).fields(
+    fields.map((field) => ({
+      name: field,
+      maxCount: maxCount, 
+    }))
+  );
+};
 
 export const FileUploadHelper = {
   uploadSingle,
   uploadMultiple,
-  uploadAny
+  uploadMultipleFields
 };

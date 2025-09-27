@@ -10,7 +10,8 @@ import config from '../../config';
 import { ENUM_COOKIE_NAME } from '../../enum/user';
 
 const signup = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.signup(req.body);
+  const result = await AuthService.signup( req.body,
+    req?.file);
 
   sendResponse(res, {
     statusCode: status.OK,

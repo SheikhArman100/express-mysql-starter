@@ -8,9 +8,12 @@ import { jwtHelpers } from '../../helpers/jwtHelpers';
 import { sendEmail } from '../../helpers/nodeMailer';
 import { parseExpirationTime } from '../../utils';
 import { IUser } from '../user/user.interface';
+import { IFile } from '../../interfaces/common';
+import { FileType } from '../../types/common';
 
 //signup
-const signup = async (payload: IUser) => {
+const signup = async (payload: IUser,multerFile?: IFile) => {
+  //check existing user
   const existingUser = await prisma.user.findFirst({
     where: {
       OR: [{ email: payload.email }, { phoneNumber: payload.phoneNumber }],
@@ -45,6 +48,25 @@ const signup = async (payload: IUser) => {
   });
   if (!newUser) {
     throw new ApiError(status.INTERNAL_SERVER_ERROR, 'Signup failed!!!');
+  }
+
+  // Handle profile image if provided
+  if (multerFile) {
+    // Create UserDetail with nested File creation
+    await prisma.userDetail.create({
+      data: {
+        userId: newUser.id,
+        image: {
+          create: {
+            diskType: 'LOCAL',
+            modifiedName: multerFile.filename,
+            originalName: multerFile.originalname,
+            path: `users/${multerFile.filename}`,
+            type: 'IMAGE',
+          },
+        },
+      },
+    });
   }
 
   //send verifyToken

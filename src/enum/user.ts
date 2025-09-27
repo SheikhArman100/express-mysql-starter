@@ -15,6 +15,7 @@ export enum ENUM_USER_ROLE {
   }
   
   export type DiskTypeEnum = 'LOCAL' | 'AWS' | 'SHARED';
+  export type FileTypeEnum = 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'OTHER';
   
   export type GeoLocationTypeEnum = 'Point' | 'Polygon';
   
