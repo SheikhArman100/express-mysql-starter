@@ -37,6 +37,23 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const resendVerification = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(status.BAD_REQUEST, 'Email is required');
+  }
+
+  const result = await AuthService.resendVerification(email);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Verification email sent successfully',
+    data: result,
+  });
+});
+
 const signin = catchAsync(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new ApiError(status.UNAUTHORIZED, 'Signin failed');
@@ -147,6 +164,7 @@ const checkUser = catchAsync(async (req: Request, res: Response) => {
 export const AuthController = {
   signup,
   verifyEmail,
+  resendVerification,
   signin,
   updateToken,
   signOut,

@@ -39,7 +39,7 @@ const signup = async (payload: IUser) => {
       email: payload.email,
       phoneNumber: payload.phoneNumber,
       password: hashedPassword,
-      isVerified: true,
+      isVerified: false,
       ...(payload.role && { role: payload.role }),
     },
   });
@@ -48,39 +48,34 @@ const signup = async (payload: IUser) => {
   }
 
   //send verifyToken
-  // const emailVerifyToken = jwtHelpers.createToken(
-  //   {
-  //     id: newUser.id,
-  //     email: newUser.email,
-  //     role: newUser.role,
-  //   },
-  //   config.jwt.verify_email_secret as Secret,
-  //   parseExpirationTime(config.jwt.verify_email_expires_in as string),
-  // );
-  // // Send Email Verification Link
-  // try {
-  //   await sendEmail(
-  //     newUser.email,
-  //     `
-  //     <div>
-  //       <p>Hi, ${newUser.name}</p>
-  //       <p>Welcome to E-Commerce! Please verify your email address by clicking the link below:</p>
-  //       <p>
-  //         <a href="${config.admin_client_url}/auth/verify-email?token=${emailVerifyToken}">
-  //           Verify Email
-  //         </a>
-  //       </p>
-  //       <p>This link will expire soon.</p>
-  //       <p>If you didn't create this account, you can ignore this email.</p>
-  //       <p>Thank you, <br> E-Commerce</p>
-  //     </div>
-  //     `,
-  //     'Verify Your Email',
-  //   );
-  // } catch (error) {
-  //   console.error('Email sending failed:', error);
-  //   throw new ApiError(status.INTERNAL_SERVER_ERROR, 'failed to send mail');
-  // }
+  const emailVerifyToken = jwtHelpers.createToken(
+    {
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    },
+    config.jwt.verify_email_secret as Secret,
+    parseExpirationTime(config.jwt.verify_email_expires_in as string),
+  );
+  // Send Email Verification Link
+  sendEmail(
+    newUser.email,
+    `
+    <div>
+      <p>Hi, ${newUser.name}</p>
+      <p>Welcome! Please verify your email address by clicking the link below:</p>
+      <p>
+        <a href="${config.admin_client_url}/auth/verify-email?token=${emailVerifyToken}">
+          Verify Email
+        </a>
+      </p>
+      <p>This link will expire in 24 hours.</p>
+      <p>If you didn't create this account, you can ignore this email.</p>
+      <p>Thank you!</p>
+    </div>
+    `,
+    'Verify Your Email',
+  );
   return {
     id: newUser.id,
   };
@@ -90,10 +85,10 @@ const signup = async (payload: IUser) => {
 const verifyEmail = async (token: string) => {
   let verifiedUser = null;
 
-  verifiedUser = jwtHelpers.verifyToken(
-    token,
-    config.jwt.verify_email_secret as Secret,
-  );
+ verifiedUser =jwtHelpers.verifyToken(
+      token,
+      config.jwt.verify_email_secret as Secret,
+    );
 
   const user = await prisma.user.findUnique({
     where: { email: verifiedUser.email },
@@ -108,6 +103,56 @@ const verifyEmail = async (token: string) => {
     data: { isVerified: true },
   });
   return updatedUser;
+};
+
+//resend verification
+const resendVerification = async (email: string) => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new ApiError(status.NOT_FOUND, 'User not found!');
+  }
+
+  if (user.isVerified) {
+    throw new ApiError(status.BAD_REQUEST, 'Email is already verified.');
+  }
+
+  // Generate new verification token
+  const emailVerifyToken = jwtHelpers.createToken(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    config.jwt.verify_email_secret as Secret,
+    parseExpirationTime(config.jwt.verify_email_expires_in as string),
+  );
+
+  // Send Email Verification Link
+  sendEmail(
+    user.email,
+    `
+    <div>
+      <p>Hi, ${user.name}</p>
+      <p>Please verify your email address by clicking the link below:</p>
+      <p>
+        <a href="${config.admin_client_url}/auth/verify-email?token=${emailVerifyToken}">
+          Verify Email
+        </a>
+      </p>
+      <p>This link will expire in 24 hours.</p>
+      <p>If you didn't request this, you can ignore this email.</p>
+      <p>Thank you!</p>
+    </div>
+    `,
+    'Verify Your Email',
+  );
+
+  return{
+    id: user.id,
+  }
 };
 
 //signin
@@ -270,6 +315,7 @@ const checkUser = async (refreshToken: string) => {
 export const AuthService = {
   signup,
   verifyEmail,
+  resendVerification,
   signin,
   updateToken,
   signOut,

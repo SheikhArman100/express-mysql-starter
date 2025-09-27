@@ -9,8 +9,11 @@ import { AuthValidation } from './auth.validation';
 
 const router = express.Router();
 
+
+//signup and email verification routes  
 router.post('/signup', validateRequest(AuthValidation.SignupSchema), AuthController.signup),
-router.put('/verify-email',validateRequest(AuthValidation.verifyEmailSchema),AuthController.verifyEmail)
+router.put('/verify-email',validateRequest(AuthValidation.verifyEmailSchema),AuthController.verifyEmail),
+router.post('/resend-verification', validateRequest(AuthValidation.resendVerificationSchema), AuthController.resendVerification)
 
 
 
