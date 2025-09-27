@@ -1,5 +1,6 @@
 import config from '../config';
 import nodemailer from 'nodemailer';
+import logger from '../shared/logger';
 
 /**
  * Sends an email using the Gmail SMTP server.
@@ -20,11 +21,20 @@ export async function sendEmail(to: string, html: string, subject: string) {
     },
   });
 
-  const mailResponse = await transporter.sendMail({
-    from: `"E-Commerce" <${config.softograph_email}>`,
-    to,
-    subject,
-    html,
-  });
-  return mailResponse;
+  try {
+    const mailResponse = await transporter.sendMail({
+      from: `"E-Commerce" <${config.softograph_email}>`,
+      to,
+      subject,
+      html,
+    });
+    return mailResponse;
+  } catch (error) {
+    logger.error(`Email sending failed: `, {
+      email: to,
+      subject,
+      error: error instanceof Error ? error.message : error,    
+    });
+    return null; // Return null on failure without throwing
+  }
 }
