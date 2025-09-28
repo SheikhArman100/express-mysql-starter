@@ -42,7 +42,7 @@ const verifyToken = (token: string, secret: Secret): UserInfoFromToken => {
     return decoded;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      throw new ApiError(status.UNAUTHORIZED, 'Token has expired');
+      throw new ApiError(status.FORBIDDEN, 'Token has expired');
     }
     if (error instanceof jwt.JsonWebTokenError) {
       throw new ApiError(status.UNAUTHORIZED, 'Invalid token');
