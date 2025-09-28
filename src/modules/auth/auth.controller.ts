@@ -143,18 +143,20 @@ const checkUser = catchAsync(async (req: Request, res: Response) => {
   const cookies = req?.cookies?.[ENUM_COOKIE_NAME.REFRESH_TOKEN];
 
   if (!cookies) {
-    throw new ApiError(status.FORBIDDEN, 'Please sign in first');
+    throw new ApiError(status.UNAUTHORIZED, 'Please sign in first');
   }
 
   const result = await AuthService.checkUser(cookies);
 
+  // The service layer throws an ApiError if not authorized, so !result is effectively unreachable here.
+  // However, if for some reason it returns null/undefined, it's still an unauthorized state.
   if (!result) {
     res.clearCookie(ENUM_COOKIE_NAME.REFRESH_TOKEN, {
       secure: config.env === 'production',
       httpOnly: true,
     });
 
-    throw new ApiError(status.FORBIDDEN, 'You are not authorized');
+    throw new ApiError(status.UNAUTHORIZED, 'You are not authorized');
   }
 
   return sendResponse(res, {
