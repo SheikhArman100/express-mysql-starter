@@ -86,6 +86,11 @@ const updateToken = catchAsync(async (req: Request, res: Response) => {
     throw new ApiError(status.UNAUTHORIZED, 'Please sign in first');
   }
 
+  res.clearCookie(ENUM_COOKIE_NAME.REFRESH_TOKEN, {
+    secure: config.env === 'production',
+    httpOnly: true,
+  });
+
   const { refreshToken, ...result } = await AuthService.updateToken(cookies);
   const cookieOptions = {
     secure: config.env === 'production',
